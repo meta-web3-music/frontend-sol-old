@@ -1,4 +1,4 @@
-import React, { useContext, useRef } from "react";
+import React, { useContext, useEffect } from "react";
 import { FaEthereum, FaCircle } from "react-icons/fa";
 import { useRouter } from "next/router";
 import { WalletContext } from "../contexts/WalletContext";
@@ -15,15 +15,54 @@ function Header() {
     router.push("/");
   };
 
-  console.log(useRouter());
+  const { walletAddress, setWalletAddress } = useContext<string>(WalletContext);
+
+  const checkIfWalletIsConnected = async () => {
+    try {
+      const { solana } = window;
+
+      if (solana) {
+        if (solana.isPhantom) {
+          console.log("Phantom wallet found!");
+          const response = await solana.connect({ onlyIfTrusted: true });
+          console.log(
+            "Connected with Public Key:",
+            response.publicKey.toString()
+          );
+        }
+      } else {
+        alert("Solana object not found! Get a Phantom Wallet 👻");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const connectWallet = async () => {
+    const { solana } = window;
+
+    if (solana) {
+      const response = await solana.connect();
+      console.log("Connected with Public Key:", response.publicKey.toString());
+      setWalletAddress(response.publicKey.toString());
+    }
+  };
+
+  useEffect(() => {
+    const onLoad = async () => {
+      await checkIfWalletIsConnected();
+    };
+    window.addEventListener("load", onLoad);
+    return () => window.removeEventListener("load", onLoad);
+  }, []);
 
   return (
     <>
-      <header className="flex flex-row items-center justify-between md:px-10 mb-10 py-2 bg-slate-50 border-b">
+      <header className="flex flex-row items-center justify-between md:px-10 mb-10 py-4 bg-gradient-to-r from-[#9945FD] to-[#14f195] border-b">
         {/* headline */}
         <div className="" onClick={navigateToHottestSongPage}>
-          <h1 className="text-3xl font-bold m-3 hover:cursor-pointer">
-            OCTAV3
+          <h1 className="text-3xl text-white font-bold m-3 hover:cursor-pointer">
+            SOLTUNES
           </h1>
         </div>
         {/* Ad marketplace */}
@@ -32,7 +71,7 @@ function Header() {
           {!useRouter().pathname.includes("adMarketPlace") ? (
             <button
               onClick={navigateToAdPage}
-              className="inline-block px-8 py-1 border bg-white text-[#FF7E39] font-medium text-base leading-tight rounded-full my-2"
+              className="inline-block px-8 py-1 border bg-white text-black font-medium text-base leading-tight rounded-full my-2"
             >
               Ad Marketplace
             </button>
@@ -50,28 +89,28 @@ function Header() {
           {/* network btn */}
           <div className="flex flex-row items-center px-4 py-1 border bg-white text-black font-medium text-xs leading-tight uppercase rounded-full my-3 mr-4">
             <img
-              src="./polygon.svg"
+              src="./solana-sol-logo.svg"
               className="flex align-center w-[16px] h-[16px]"
             />
-            <span className="flex ml-1 text-base">Mumbai</span>
+            <span className="flex ml-1 text-base">SOLANA</span>
           </div>
-          {!walletContext.walletAddress ? (
+          {!walletAddress ? (
             <button
-              onClick={walletContext.getWeb3Provider}
+              onClick={connectWallet}
               className="flex flex-row items-center px-4 py-1 border bg-white text-black font-medium text-base leading-tight uppercase rounded-full my-3 mr-4"
             >
               Connect
             </button>
           ) : (
             <button
-              onClick={walletContext.clearWallet}
-              className="flex flex-row items-center px-4 py-1 border bg-white text-black font-medium text-base leading-tight uppercase rounded-full my-3"
+              onClick={null}
+              className="flex flex-row items-center px-1 py-1 border bg-white text-black font-medium text-base leading-tight uppercase rounded-full my-3"
             >
-              <span>0 MATIC</span>
-              <span className="flex flex-row align-center bg-gray-100 rounded-full p-1 ml-1">
+              {/* <span>SOL</span> */}
+              <span className="flex flex-row align-center bg-gray-100 rounded-full p-1">
                 <FaCircle className=" text-[#15ae5c] mr-1 w-5 h-5" />
-                {walletContext.walletAddress.substr(0, 4)}...
-                {walletContext.walletAddress.substr(-4, 4)}
+                {walletAddress.substr(0, 4)}...
+                {walletAddress.substr(-4, 4)}
               </span>
             </button>
           )}
